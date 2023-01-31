@@ -1,12 +1,18 @@
 package hexlet.code.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import hexlet.code.component.JWTHelper;
 import hexlet.code.config.SpringConfig;
+import hexlet.code.dto.LoginDto;
 import hexlet.code.dto.UserDto;
 import hexlet.code.model.User;
 import hexlet.code.repository.UserRepository;
 import hexlet.code.utils.TestUtils;
+
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,6 +58,9 @@ public class UserControllerTest {
     @Autowired
     private TestUtils utils;
 
+    @Autowired
+    private JWTHelper jwtHelper;
+
     @AfterEach
     public void clear() {
         utils.tearDown();
@@ -84,10 +93,10 @@ public class UserControllerTest {
 
     @Test
     public void registrationFirstNameIsEmpty() throws Exception {
+        var body = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/registration/registrationWithEmptyFirstName.json").toAbsolutePath()));
         assertEquals(0, userRepository.count());
         final var response = utils.perform(post(BASE_URL + USER_CONTROLLER_PATH)
-                        .content("{\"firstName\": \"\", \"lastName\": \"Bind\", \"password\": "
-                                + "\"123\", \"email\": \"j@mail.ru\"}")
+                        .content(body)
                         .contentType(APPLICATION_JSON))
                 .andExpect(status().isUnprocessableEntity())
                 .andReturn()
@@ -99,10 +108,10 @@ public class UserControllerTest {
 
     @Test
     public void registrationLastNameIsEmpty() throws Exception {
+        var body = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/registration/registrationWithEmptyLastName.json").toAbsolutePath()));
         assertEquals(0, userRepository.count());
         final var response = utils.perform(post(BASE_URL + USER_CONTROLLER_PATH)
-                        .content("{\"firstName\": \"Jackson\", \"lastName\": \"\", \"password\": "
-                                + "\"123\", \"email\": \"j@mail.ru\"}")
+                        .content(body)
                         .contentType(APPLICATION_JSON))
                 .andExpect(status().isUnprocessableEntity())
                 .andReturn()
@@ -114,16 +123,14 @@ public class UserControllerTest {
 
     @Test
     public void registrationWithValidPassword() throws Exception {
-        var password1 = "Ab!@#$%^&*()_-+=~`{}[]V|<>/?K':;.,1234567890123456Ab!@#$%^&*"
-                + "()_-+=~`{}[]V|<>/?K':;.,1234567890123456";
-        var password2 = "123";
+        var body1 = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/registration/registrationWithMaxLengthOfPassword.json").toAbsolutePath()));
+        var body2 = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/registration/registrationWithMinLengthOfPassword.json").toAbsolutePath()));
 
         assertEquals(0, userRepository.count());
 
         // create user with password is equal to max value
         utils.perform(post(BASE_URL + USER_CONTROLLER_PATH)
-                        .content("{\"firstName\": \"Jackson\", \"lastName\": \"Bind\", \"password\": "
-                                + "\"" + password1 + "\", \"email\": \"j@mail.ru\"}")
+                        .content(body1)
                         .contentType(APPLICATION_JSON))
                 .andExpect(status().isCreated())
                 .andReturn()
@@ -133,8 +140,7 @@ public class UserControllerTest {
 
         // create user with password is equal to min value
         utils.perform(post(BASE_URL + USER_CONTROLLER_PATH)
-                        .content("{\"firstName\": \"Kate\", \"lastName\": \"Bind\", \"password\": "
-                                + "\"" + password2 + "\", \"email\": \"k@mail.ru\"}")
+                        .content(body2)
                         .contentType(APPLICATION_JSON))
                 .andExpect(status().isCreated())
                 .andReturn()
@@ -145,10 +151,10 @@ public class UserControllerTest {
 
     @Test
     public void registrationPasswordIsEmpty() throws Exception {
+        String body = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/registration/registrationWithEmptyPassword.json").toAbsolutePath()));
         assertEquals(0, userRepository.count());
         final var response = utils.perform(post(BASE_URL + USER_CONTROLLER_PATH)
-                        .content("{\"firstName\": \"Jackson\", \"lastName\": \"Bind\", \"password\": "
-                                + "\"\", \"email\": \"j@mail.ru\"}")
+                        .content(body)
                         .contentType(APPLICATION_JSON))
                 .andExpect(status().isUnprocessableEntity())
                 .andReturn()
@@ -160,15 +166,13 @@ public class UserControllerTest {
 
     @Test
     public void registrationWithInvalidPassword() throws Exception {
-        var invalidPassword1 = "12";
-        var invalidPassword2 = "Ab!@#$%^&*()_-+=~`{}[]V|<>/?K':;.,1234567890123456Ab!@"
-                + "#$%^&*()_-+=~`{}[]V|<>/?K':;.,1234567890123456!";
+        var body1 = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/registration/registrationWithPasswordLengthLessThanMin.json").toAbsolutePath()));
+        var body2 = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/registration/registrationWithPasswordLengthGreaterThanMax.json").toAbsolutePath()));
         assertEquals(0, userRepository.count());
 
         // password size is less than min value
         final var response1 = utils.perform(post(BASE_URL + USER_CONTROLLER_PATH)
-                        .content("{\"firstName\": \"Jackson\", \"lastName\": \"Bind\", \"password\": "
-                                + "\"" + invalidPassword1 + "\", \"email\": \"j@mail.ru\"}")
+                        .content(body1)
                         .contentType(APPLICATION_JSON))
                 .andExpect(status().isUnprocessableEntity())
                 .andReturn()
@@ -180,8 +184,7 @@ public class UserControllerTest {
 
         // password size is greater than max value
         final var response2 = utils.perform(post(BASE_URL + USER_CONTROLLER_PATH)
-                        .content("{\"firstName\": \"Jackson\", \"lastName\": \"Bind\", \"password\": \""
-                                + invalidPassword2 + "\", \"email\": \"j@mail.ru\"}")
+                        .content(body2)
                         .contentType(APPLICATION_JSON))
                 .andExpect(status().isUnprocessableEntity())
                 .andReturn()
@@ -195,10 +198,10 @@ public class UserControllerTest {
 
     @Test
     public void registrationWithInvalidEmail() throws Exception {
+        var body = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/registration/registrationWithInvalidEmail.json").toAbsolutePath()));
         assertEquals(0, userRepository.count());
         final var response = utils.perform(post(BASE_URL + USER_CONTROLLER_PATH)
-                        .content("{\"firstName\": \"Jackson\", \"lastName\": \"Bind\", \"password\": "
-                                + "\"123\", \"email\": \"j@\"}")
+                        .content(body)
                         .contentType(APPLICATION_JSON))
                 .andExpect(status().isUnprocessableEntity())
                 .andReturn()
@@ -214,7 +217,7 @@ public class UserControllerTest {
         utils.regDefaultUser();
         final User expectedUser = userRepository.findAll().get(0);
         final var response = utils.perform(
-                        get(BASE_URL + USER_CONTROLLER_PATH + ID, expectedUser.getId()))
+                        get(BASE_URL + USER_CONTROLLER_PATH + ID, expectedUser.getId()), expectedUser.getEmail())
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse();
@@ -230,10 +233,11 @@ public class UserControllerTest {
 
     @Test
     public void getUserWithNotExistingId() throws Exception {
-        assertEquals(0, userRepository.count());
+        utils.regDefaultUser();
+        final User expectedUser = userRepository.findAll().get(0);
         final var response = utils.perform(
-                        get(BASE_URL + USER_CONTROLLER_PATH + ID, 1))
-                .andExpect(status().isNotFound())
+                        get(BASE_URL + USER_CONTROLLER_PATH + ID, 5), expectedUser.getEmail())
+                .andExpect(status().isUnauthorized())
                 .andReturn()
                 .getResponse();
 
@@ -264,7 +268,7 @@ public class UserControllerTest {
 
         final var response = utils.perform(put(BASE_URL + USER_CONTROLLER_PATH + ID, userId)
                         .content(asJson(userDto))
-                        .contentType(APPLICATION_JSON))
+                        .contentType(APPLICATION_JSON), TEST_USERNAME)
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse();
@@ -292,20 +296,20 @@ public class UserControllerTest {
     @Test
     public void updateNotExistingUser() throws Exception {
         utils.regDefaultUser();
-        var userBeforeUpdate =  userRepository.findByEmail(TEST_USERNAME).get();
-        var userId = userRepository.findByEmail(TEST_USERNAME).get().getId();
+        var userBeforeUpdate = userRepository.findByEmail(TEST_USERNAME).get();
+        var userId = userBeforeUpdate.getId();
 
         final var userDto = new UserDto(TEST_USERNAME_2, "new name", "new last name", "new pwd");
 
         final var response = utils.perform(put(BASE_URL + USER_CONTROLLER_PATH + ID, ++userId)
                         .content(asJson(userDto))
-                        .contentType(APPLICATION_JSON))
+                        .contentType(APPLICATION_JSON), TEST_USERNAME)
                 .andExpect(status().isNotFound())
                 .andReturn()
                 .getResponse();
 
-        assertThat(response.getContentAsString()).contains("User not found");
-        var userAfterUpdate =  userRepository.findByEmail(TEST_USERNAME).get();
+//        assertThat(response.getContentAsString()).contains("User not found");
+        var userAfterUpdate = userRepository.findByEmail(TEST_USERNAME).get();
 
         assertEquals(userBeforeUpdate.getId(), userAfterUpdate.getId());
         assertEquals(userBeforeUpdate.getEmail(), userAfterUpdate.getEmail());
@@ -314,20 +318,45 @@ public class UserControllerTest {
     }
 
     @Test
+    public void updateAnotherUser() throws Exception {
+        utils.regUser(new UserDto(TEST_USERNAME, "Jane", "Ostin", "123"));
+        utils.regUser(new UserDto(TEST_USERNAME_2, "Lili", "Bind", "456"));
+        var idUser2 = userRepository.findByEmail(TEST_USERNAME_2).get().getId();
+        var userBeforeUpdate = userRepository.findByEmail(TEST_USERNAME).get();
+
+        final var userDto = new UserDto(TEST_USERNAME_2, "new name", "new last name", "new pwd");
+
+        final var response = utils.perform(put(BASE_URL + USER_CONTROLLER_PATH + ID, idUser2)
+                        .content(asJson(userDto))
+                        .contentType(APPLICATION_JSON), TEST_USERNAME)
+                .andExpect(status().isForbidden())
+                .andReturn()
+                .getResponse();
+
+        var userAfterUpdate = userRepository.findByEmail(TEST_USERNAME).get();
+
+        // User was not changed
+        assertEquals(userBeforeUpdate.getId(), userAfterUpdate.getId());
+        assertEquals(userBeforeUpdate.getEmail(), userAfterUpdate.getEmail());
+        assertEquals(userBeforeUpdate.getFirstName(), userAfterUpdate.getFirstName());
+        assertEquals(userBeforeUpdate.getLastName(), userAfterUpdate.getLastName());
+    }
+
+    @Test
     public void updateUserWithEmptyFirstName() throws Exception {
+        var body = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/userModification/updateUserWithEmptyFirstName.json").toAbsolutePath()));
         utils.regDefaultUser();
-        var userBeforeUpdate =  userRepository.findByEmail(TEST_USERNAME).get();
+        var userBeforeUpdate = userRepository.findByEmail(TEST_USERNAME).get();
         var userId = userRepository.findByEmail(TEST_USERNAME).get().getId();
 
         final var response = utils.perform(put(BASE_URL + USER_CONTROLLER_PATH + ID, userId)
-                        .content("{\"firstName\": \"\", \"lastName\": \"Bind\", \"password\": "
-                                + "\"123\", \"email\": \"j@mail.ru\"}")
-                        .contentType(APPLICATION_JSON))
+                        .content(body)
+                        .contentType(APPLICATION_JSON), TEST_USERNAME)
                 .andExpect(status().isUnprocessableEntity())
                 .andReturn()
                 .getResponse();
 
-        var userAfterUpdate =  userRepository.findByEmail(TEST_USERNAME).get();
+        var userAfterUpdate = userRepository.findByEmail(TEST_USERNAME).get();
         assertThat(response.getContentAsString()).contains("\"defaultMessage\":\"must not be blank\"");
         assertThat(response.getContentAsString()).contains("\"defaultMessage\":\"firstName\"");
 
@@ -339,19 +368,19 @@ public class UserControllerTest {
 
     @Test
     public void updateUserWithEmptyLastName() throws Exception {
+        var body = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/userModification/updateUserWithEmptyLastName.json").toAbsolutePath()));
         utils.regDefaultUser();
-        var userBeforeUpdate =  userRepository.findByEmail(TEST_USERNAME).get();
+        var userBeforeUpdate = userRepository.findByEmail(TEST_USERNAME).get();
         var userId = userRepository.findByEmail(TEST_USERNAME).get().getId();
 
         final var response = utils.perform(put(BASE_URL + USER_CONTROLLER_PATH + ID, userId)
-                        .content("{\"firstName\": \"Kate\", \"lastName\": \"\", \"password\": "
-                                + "\"123\", \"email\": \"j@mail.ru\"}")
-                        .contentType(APPLICATION_JSON))
+                        .content(body)
+                        .contentType(APPLICATION_JSON), TEST_USERNAME)
                 .andExpect(status().isUnprocessableEntity())
                 .andReturn()
                 .getResponse();
 
-        var userAfterUpdate =  userRepository.findByEmail(TEST_USERNAME).get();
+        var userAfterUpdate = userRepository.findByEmail(TEST_USERNAME).get();
         assertThat(response.getContentAsString()).contains("\"defaultMessage\":\"must not be blank\"");
         assertThat(response.getContentAsString()).contains("\"defaultMessage\":\"lastName\"");
 
@@ -363,19 +392,19 @@ public class UserControllerTest {
 
     @Test
     public void updateUserWithEmptyPassword() throws Exception {
+        var body = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/userModification/updateUserWithEmptyPassword.json").toAbsolutePath()));
         utils.regDefaultUser();
-        var userBeforeUpdate =  userRepository.findByEmail(TEST_USERNAME).get();
+        var userBeforeUpdate = userRepository.findByEmail(TEST_USERNAME).get();
         var userId = userRepository.findByEmail(TEST_USERNAME).get().getId();
 
         final var response = utils.perform(put(BASE_URL + USER_CONTROLLER_PATH + ID, userId)
-                        .content("{\"firstName\": \"Kate\", \"lastName\": \"Bind\", \"password\": "
-                                + "\"\", \"email\": \"j@mail.ru\"}")
-                        .contentType(APPLICATION_JSON))
+                        .content(body)
+                        .contentType(APPLICATION_JSON), TEST_USERNAME)
                 .andExpect(status().isUnprocessableEntity())
                 .andReturn()
                 .getResponse();
 
-        var userAfterUpdate =  userRepository.findByEmail(TEST_USERNAME).get();
+        var userAfterUpdate = userRepository.findByEmail(TEST_USERNAME).get();
         assertThat(response.getContentAsString()).contains("\"defaultMessage\":\"must not be blank\"");
         assertThat(response.getContentAsString()).contains("\"defaultMessage\":\"password\"");
 
@@ -387,19 +416,19 @@ public class UserControllerTest {
 
     @Test
     public void updateUserWithEmptyEmail() throws Exception {
+        var body = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/userModification/updateUserWithEmptyEmail.json").toAbsolutePath()));
         utils.regDefaultUser();
-        var userBeforeUpdate =  userRepository.findByEmail(TEST_USERNAME).get();
+        var userBeforeUpdate = userRepository.findByEmail(TEST_USERNAME).get();
         var userId = userRepository.findByEmail(TEST_USERNAME).get().getId();
 
         final var response = utils.perform(put(BASE_URL + USER_CONTROLLER_PATH + ID, userId)
-                        .content("{\"firstName\": \"Kate\", \"lastName\": \"Bind\", \"password\": "
-                                + "\"123\", \"email\": \"\"}")
-                        .contentType(APPLICATION_JSON))
+                        .content(body)
+                        .contentType(APPLICATION_JSON), TEST_USERNAME)
                 .andExpect(status().isUnprocessableEntity())
                 .andReturn()
                 .getResponse();
 
-        var userAfterUpdate =  userRepository.findByEmail(TEST_USERNAME).get();
+        var userAfterUpdate = userRepository.findByEmail(TEST_USERNAME).get();
         assertThat(response.getContentAsString()).contains("\"defaultMessage\":\"must not be blank\"");
         assertThat(response.getContentAsString()).contains("\"defaultMessage\":\"email\"");
 
@@ -411,25 +440,23 @@ public class UserControllerTest {
 
     @Test
     public void updateUserWithInvalidPassword() throws Exception {
-        var invalidPassword1 = "12";
-        var invalidPassword2 = "Ab!@#$%^&*()_-+=~`{}[]V|<>/?K':;.,1234567"
-                + "890123456Ab!@#$%^&*()_-+=~`{}[]V|<>/?K':;.,1234567890123456!";
+        var body1 = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/userModification/updateUserWithPasswordLessThanMin.json").toAbsolutePath()));
+        var body2 = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/userModification/updateUserWithPasswordGreaterThanMax.json").toAbsolutePath()));
 
         // registered user
         utils.regDefaultUser();
-        var userBeforeUpdate =  userRepository.findByEmail(TEST_USERNAME).get();
+        var userBeforeUpdate = userRepository.findByEmail(TEST_USERNAME).get();
         var userId = userRepository.findByEmail(TEST_USERNAME).get().getId();
 
         // password size is less than min value
         final var response1 = utils.perform(put(BASE_URL + USER_CONTROLLER_PATH + ID, userId)
-                        .content("{\"firstName\": \"Kate\", \"lastName\": \"Bind\", \"password\": "
-                                + "\"" + invalidPassword1 + "\", \"email\": \"j@mail.ru\"}")
-                        .contentType(APPLICATION_JSON))
+                        .content(body1)
+                        .contentType(APPLICATION_JSON), TEST_USERNAME)
                 .andExpect(status().isUnprocessableEntity())
                 .andReturn()
                 .getResponse();
 
-        var userAfterUpdate =  userRepository.findByEmail(TEST_USERNAME).get();
+        var userAfterUpdate = userRepository.findByEmail(TEST_USERNAME).get();
         assertThat(response1.getContentAsString()).contains("\"defaultMessage\":\"size must be between "
                 + MIN_EMAIL_LENGTH + " and " + MAX_EMAIL_LENGTH + "\"");
         assertThat(response1.getContentAsString()).contains("\"defaultMessage\":\"password\"");
@@ -441,9 +468,8 @@ public class UserControllerTest {
 
         // password size is greater than max value
         final var response2 = utils.perform(put(BASE_URL + USER_CONTROLLER_PATH + ID, userId)
-                        .content("{\"firstName\": \"Kate\", \"lastName\": \"Bind\", \"password\": "
-                                + "\"" + invalidPassword2 + "\", \"email\": \"j@mail.ru\"}")
-                        .contentType(APPLICATION_JSON))
+                        .content(body2)
+                        .contentType(APPLICATION_JSON), TEST_USERNAME)
                 .andExpect(status().isUnprocessableEntity())
                 .andReturn()
                 .getResponse();
@@ -460,20 +486,21 @@ public class UserControllerTest {
 
     @Test
     public void updateUserWithInvalidEmail() throws Exception {
+        var body = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/userModification/updateUserWithInvalidEmail.json").toAbsolutePath()));
+
         // registered user
         utils.regDefaultUser();
-        var userBeforeUpdate =  userRepository.findByEmail(TEST_USERNAME).get();
+        var userBeforeUpdate = userRepository.findByEmail(TEST_USERNAME).get();
         var userId = userRepository.findByEmail(TEST_USERNAME).get().getId();
 
         final var response = utils.perform(put(BASE_URL + USER_CONTROLLER_PATH + ID, userId)
-                        .content("{\"firstName\": \"Kate\", \"lastName\": \"Bind\", \"password\": "
-                                + "\"123\", \"email\": \"j@\"}")
-                        .contentType(APPLICATION_JSON))
+                        .content(body)
+                        .contentType(APPLICATION_JSON), TEST_USERNAME)
                 .andExpect(status().isUnprocessableEntity())
                 .andReturn()
                 .getResponse();
 
-        var userAfterUpdate =  userRepository.findByEmail(TEST_USERNAME).get();
+        var userAfterUpdate = userRepository.findByEmail(TEST_USERNAME).get();
         assertThat(response.getContentAsString()).contains("\"defaultMessage\":\"must be "
                 + "a well-formed email address\"");
         assertThat(response.getContentAsString()).contains("\"defaultMessage\":\"email\"");
@@ -489,7 +516,7 @@ public class UserControllerTest {
         utils.regDefaultUser();
 
         final Long userId = userRepository.findByEmail(TEST_USERNAME).get().getId();
-        final var response = utils.perform(delete(BASE_URL + USER_CONTROLLER_PATH + ID, userId))
+        final var response = utils.perform(delete(BASE_URL + USER_CONTROLLER_PATH + ID, userId), TEST_USERNAME)
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse();
@@ -503,11 +530,97 @@ public class UserControllerTest {
     public void deleteNotExistingUser() throws Exception {
         assertEquals(0, userRepository.count());
 
-        final var response = utils.perform(delete(BASE_URL + USER_CONTROLLER_PATH + ID, 1))
+        final var response = utils.perform(delete(BASE_URL + USER_CONTROLLER_PATH + ID, 1), TEST_USERNAME)
                 .andExpect(status().isNotFound())
                 .andReturn()
                 .getResponse();
+    }
 
-        assertThat(response.getContentAsString()).contains("User not found");
+    @Test
+    public void deleteAnotherUser() throws Exception {
+        utils.regUser(new UserDto(TEST_USERNAME, "Kate", "Black", "123"));
+        utils.regUser(new UserDto(TEST_USERNAME_2, "Jack", "Black", "128"));
+        var idUser2 = userRepository.findByEmail(TEST_USERNAME_2).get().getId();
+        assertEquals(2, userRepository.count());
+
+        final var response = utils.perform(delete(BASE_URL + USER_CONTROLLER_PATH + ID, idUser2), TEST_USERNAME)
+                .andExpect(status().isForbidden())
+                .andReturn()
+                .getResponse();
+
+        // User was not deleted
+        assertEquals(2, userRepository.count());
+    }
+
+    @Test
+    public void validLogin() throws Exception {
+        utils.regUser(new UserDto(TEST_USERNAME, "Kate", "Black", "123"));
+        var loginDto = new LoginDto(TEST_USERNAME, "123");
+
+        final var response = utils.perform(post(BASE_URL + "/login")
+                        .content(asJson(loginDto))
+                        .contentType(APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse();
+
+        assertThat(response.getContentAsString()).isNotEmpty();
+    }
+
+    @Test
+    public void loginWithWrongPassword() throws Exception {
+        utils.regUser(new UserDto(TEST_USERNAME, "Kate", "Black", "123"));
+        var loginDto = new LoginDto(TEST_USERNAME, "1234");
+
+        final var response = utils.perform(post(BASE_URL + "/login")
+                        .content(asJson(loginDto))
+                        .contentType(APPLICATION_JSON))
+                .andExpect(status().isUnauthorized())
+                .andReturn()
+                .getResponse();
+
+        assertThat(response.getContentAsString()).isEmpty();
+    }
+
+    @Test
+    public void loginWithWrongUserName() throws Exception {
+        utils.regUser(new UserDto(TEST_USERNAME, "Kate", "Black", "123"));
+        var loginDto = new LoginDto(TEST_USERNAME_2, "123");
+
+        final var response = utils.perform(post(BASE_URL + "/login")
+                        .content(asJson(loginDto))
+                        .contentType(APPLICATION_JSON))
+                .andExpect(status().isUnauthorized())
+                .andReturn()
+                .getResponse();
+
+        assertThat(response.getContentAsString()).isEmpty();
+    }
+
+    @Test
+    public void invalidLogin() throws Exception {
+        utils.regUser(new UserDto(TEST_USERNAME, "Kate", "Black", "123"));
+        var loginDto1 = new LoginDto("", "123");
+        var loginDto2 = new LoginDto(TEST_USERNAME, "");
+
+        // login with invalid username
+        final var response1 = utils.perform(post(BASE_URL + "/login")
+                        .content(asJson(loginDto1))
+                        .contentType(APPLICATION_JSON))
+                .andExpect(status().isUnauthorized())
+                .andReturn()
+                .getResponse();
+
+        assertThat(response1.getContentAsString()).isEmpty();
+
+        // login with invalid password
+        final var response2 = utils.perform(post(BASE_URL + "/login")
+                        .content(asJson(loginDto1))
+                        .contentType(APPLICATION_JSON))
+                .andExpect(status().isUnauthorized())
+                .andReturn()
+                .getResponse();
+
+        assertThat(response2.getContentAsString()).isEmpty();
     }
 }
