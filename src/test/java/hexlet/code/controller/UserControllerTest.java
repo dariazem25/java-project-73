@@ -308,7 +308,6 @@ public class UserControllerTest {
                 .andReturn()
                 .getResponse();
 
-//        assertThat(response.getContentAsString()).contains("User not found");
         var userAfterUpdate = userRepository.findByEmail(TEST_USERNAME).get();
 
         assertEquals(userBeforeUpdate.getId(), userAfterUpdate.getId());
