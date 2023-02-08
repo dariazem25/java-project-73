@@ -51,6 +51,8 @@ public class UserControllerTest {
 
     private static final int MIN_EMAIL_LENGTH = 3;
     private static final int MAX_EMAIL_LENGTH = 100;
+    private static final String REQUEST_REGISTRATION = "src/test/resources/requests/registration/";
+    private static final String REQUEST_MODIFICATION = "src/test/resources/requests/userModification/";
 
     @Autowired
     private UserRepository userRepository;
@@ -93,7 +95,8 @@ public class UserControllerTest {
 
     @Test
     public void registrationFirstNameIsEmpty() throws Exception {
-        var body = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/registration/registrationWithEmptyFirstName.json").toAbsolutePath()));
+        var body = new String(Files.readAllBytes(Paths.get(REQUEST_REGISTRATION
+                + "registrationWithEmptyFirstName.json").toAbsolutePath()));
         assertEquals(0, userRepository.count());
         final var response = utils.perform(post(BASE_URL + USER_CONTROLLER_PATH)
                         .content(body)
@@ -108,7 +111,8 @@ public class UserControllerTest {
 
     @Test
     public void registrationLastNameIsEmpty() throws Exception {
-        var body = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/registration/registrationWithEmptyLastName.json").toAbsolutePath()));
+        var body = new String(Files.readAllBytes(Paths.get(REQUEST_REGISTRATION
+                + "registrationWithEmptyLastName.json").toAbsolutePath()));
         assertEquals(0, userRepository.count());
         final var response = utils.perform(post(BASE_URL + USER_CONTROLLER_PATH)
                         .content(body)
@@ -123,8 +127,10 @@ public class UserControllerTest {
 
     @Test
     public void registrationWithValidPassword() throws Exception {
-        var body1 = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/registration/registrationWithMaxLengthOfPassword.json").toAbsolutePath()));
-        var body2 = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/registration/registrationWithMinLengthOfPassword.json").toAbsolutePath()));
+        var body1 = new String(Files.readAllBytes(Paths.get(REQUEST_REGISTRATION
+                + "registrationWithMaxLengthOfPassword.json").toAbsolutePath()));
+        var body2 = new String(Files.readAllBytes(Paths.get(REQUEST_REGISTRATION
+                + "registrationWithMinLengthOfPassword.json").toAbsolutePath()));
 
         assertEquals(0, userRepository.count());
 
@@ -151,7 +157,8 @@ public class UserControllerTest {
 
     @Test
     public void registrationPasswordIsEmpty() throws Exception {
-        String body = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/registration/registrationWithEmptyPassword.json").toAbsolutePath()));
+        String body = new String(Files.readAllBytes(Paths.get(REQUEST_REGISTRATION
+                + "registrationWithEmptyPassword.json").toAbsolutePath()));
         assertEquals(0, userRepository.count());
         final var response = utils.perform(post(BASE_URL + USER_CONTROLLER_PATH)
                         .content(body)
@@ -166,8 +173,10 @@ public class UserControllerTest {
 
     @Test
     public void registrationWithInvalidPassword() throws Exception {
-        var body1 = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/registration/registrationWithPasswordLengthLessThanMin.json").toAbsolutePath()));
-        var body2 = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/registration/registrationWithPasswordLengthGreaterThanMax.json").toAbsolutePath()));
+        var body1 = new String(Files.readAllBytes(Paths.get(REQUEST_REGISTRATION
+                + "registrationWithPasswordLengthLessThanMin.json").toAbsolutePath()));
+        var body2 = new String(Files.readAllBytes(Paths.get(REQUEST_REGISTRATION
+                + "registrationWithPasswordLengthGreaterThanMax.json").toAbsolutePath()));
         assertEquals(0, userRepository.count());
 
         // password size is less than min value
@@ -198,7 +207,8 @@ public class UserControllerTest {
 
     @Test
     public void registrationWithInvalidEmail() throws Exception {
-        var body = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/registration/registrationWithInvalidEmail.json").toAbsolutePath()));
+        var body = new String(Files.readAllBytes(Paths.get(REQUEST_REGISTRATION
+                + "registrationWithInvalidEmail.json").toAbsolutePath()));
         assertEquals(0, userRepository.count());
         final var response = utils.perform(post(BASE_URL + USER_CONTROLLER_PATH)
                         .content(body)
@@ -343,7 +353,8 @@ public class UserControllerTest {
 
     @Test
     public void updateUserWithEmptyFirstName() throws Exception {
-        var body = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/userModification/updateUserWithEmptyFirstName.json").toAbsolutePath()));
+        var body = new String(Files.readAllBytes(Paths.get(REQUEST_MODIFICATION
+                + "updateUserWithEmptyFirstName.json").toAbsolutePath()));
         utils.regDefaultUser();
         var userBeforeUpdate = userRepository.findByEmail(TEST_USERNAME).get();
         var userId = userRepository.findByEmail(TEST_USERNAME).get().getId();
@@ -367,7 +378,8 @@ public class UserControllerTest {
 
     @Test
     public void updateUserWithEmptyLastName() throws Exception {
-        var body = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/userModification/updateUserWithEmptyLastName.json").toAbsolutePath()));
+        var body = new String(Files.readAllBytes(Paths.get(REQUEST_MODIFICATION
+                + "updateUserWithEmptyLastName.json").toAbsolutePath()));
         utils.regDefaultUser();
         var userBeforeUpdate = userRepository.findByEmail(TEST_USERNAME).get();
         var userId = userRepository.findByEmail(TEST_USERNAME).get().getId();
@@ -391,7 +403,8 @@ public class UserControllerTest {
 
     @Test
     public void updateUserWithEmptyPassword() throws Exception {
-        var body = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/userModification/updateUserWithEmptyPassword.json").toAbsolutePath()));
+        var body = new String(Files.readAllBytes(Paths.get(REQUEST_MODIFICATION
+                + "updateUserWithEmptyPassword.json").toAbsolutePath()));
         utils.regDefaultUser();
         var userBeforeUpdate = userRepository.findByEmail(TEST_USERNAME).get();
         var userId = userRepository.findByEmail(TEST_USERNAME).get().getId();
@@ -415,7 +428,8 @@ public class UserControllerTest {
 
     @Test
     public void updateUserWithEmptyEmail() throws Exception {
-        var body = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/userModification/updateUserWithEmptyEmail.json").toAbsolutePath()));
+        var body = new String(Files.readAllBytes(Paths.get(REQUEST_MODIFICATION
+                + "updateUserWithEmptyEmail.json").toAbsolutePath()));
         utils.regDefaultUser();
         var userBeforeUpdate = userRepository.findByEmail(TEST_USERNAME).get();
         var userId = userRepository.findByEmail(TEST_USERNAME).get().getId();
@@ -439,8 +453,10 @@ public class UserControllerTest {
 
     @Test
     public void updateUserWithInvalidPassword() throws Exception {
-        var body1 = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/userModification/updateUserWithPasswordLessThanMin.json").toAbsolutePath()));
-        var body2 = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/userModification/updateUserWithPasswordGreaterThanMax.json").toAbsolutePath()));
+        var body1 = new String(Files.readAllBytes(Paths.get(REQUEST_MODIFICATION
+                + "updateUserWithPasswordLessThanMin.json").toAbsolutePath()));
+        var body2 = new String(Files.readAllBytes(Paths.get(REQUEST_MODIFICATION
+                + "updateUserWithPasswordGreaterThanMax.json").toAbsolutePath()));
 
         // registered user
         utils.regDefaultUser();
@@ -485,7 +501,8 @@ public class UserControllerTest {
 
     @Test
     public void updateUserWithInvalidEmail() throws Exception {
-        var body = new String(Files.readAllBytes(Paths.get("src/test/resources/requests/userModification/updateUserWithInvalidEmail.json").toAbsolutePath()));
+        var body = new String(Files.readAllBytes(Paths.get(REQUEST_MODIFICATION
+                + "updateUserWithInvalidEmail.json").toAbsolutePath()));
 
         // registered user
         utils.regDefaultUser();
