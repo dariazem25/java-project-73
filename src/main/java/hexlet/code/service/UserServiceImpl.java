@@ -4,6 +4,8 @@ import hexlet.code.dto.UserDto;
 import hexlet.code.model.User;
 import hexlet.code.repository.UserRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -53,6 +55,9 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     public void deleteUser(Long id) {
         final User user = userRepository.findById(id)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        if (!(user.getExecutorTasks().isEmpty()) || !(user.getAuthorTasks().isEmpty())) {
+            throw new DataIntegrityViolationException("Cannot delete the user. The user has tasks");
+        }
         userRepository.delete(user);
     }
 
@@ -69,5 +74,15 @@ public class UserServiceImpl implements UserService, UserDetailsService {
                 user.getPassword(),
                 DEFAULT_AUTHORITIES
         );
+    }
+
+    @Override
+    public String getCurrentUserName() {
+        return SecurityContextHolder.getContext().getAuthentication().getName();
+    }
+
+    @Override
+    public User getCurrentUser() {
+        return userRepository.findByEmail(getCurrentUserName()).get();
     }
 }

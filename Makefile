@@ -33,3 +33,7 @@ generate-migrations:
 
 db-migrate:
 	./gradlew update
+
+
+report:
+	./gradlew jacocoTestReport

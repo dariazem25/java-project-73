@@ -4,6 +4,7 @@ import hexlet.code.dto.TaskStatusDto;
 import hexlet.code.model.TaskStatus;
 import hexlet.code.repository.TaskStatusRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +42,9 @@ public class TaskStatusServiceImpl implements TaskStatusService {
     public void deleteTaskStatus(Long id) {
         final TaskStatus taskStatus = taskStatusRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Task status not found"));
+        if (!taskStatus.getTasks().isEmpty()) {
+            throw new DataIntegrityViolationException("Cannot delete the task status. The task status has tasks");
+        }
         taskStatusRepository.delete(taskStatus);
     }
 }

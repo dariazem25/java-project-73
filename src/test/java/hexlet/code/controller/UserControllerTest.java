@@ -639,4 +639,22 @@ public class UserControllerTest {
 
         assertThat(response2.getContentAsString()).isEmpty();
     }
+
+    @Test
+    public void deleteUserWithExistingTasks() throws Exception {
+        utils.regDefaultUser();
+
+        // existent task
+        utils.createDefaultTask(TEST_USERNAME);
+
+        final Long userId = userRepository.findByEmail(TEST_USERNAME).get().getId();
+        final var response = utils.perform(delete(BASE_URL + USER_CONTROLLER_PATH + ID, userId), TEST_USERNAME)
+                .andExpect(status().isUnprocessableEntity())
+                .andReturn()
+                .getResponse();
+
+        assertThat(response.getContentAsString()).contains("Cannot delete the user. The user has tasks");
+
+        assertEquals(1, userRepository.count());
+    }
 }

@@ -4,9 +4,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hexlet.code.component.JWTHelper;
+import hexlet.code.dto.TaskDto;
 import hexlet.code.dto.TaskStatusDto;
 import hexlet.code.dto.UserDto;
+import hexlet.code.model.Task;
 import hexlet.code.model.TaskStatus;
+import hexlet.code.repository.TaskRepository;
 import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,9 +20,9 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 
 import java.util.Map;
 
+import static hexlet.code.controller.TaskController.TASKS_CONTROLLER_PATH;
 import static hexlet.code.controller.TaskStatusController.TASK_STATUS_CONTROLLER_PATH;
 import static hexlet.code.controller.UserController.USER_CONTROLLER_PATH;
-import static hexlet.code.utils.TestUtils.TEST_USERNAME;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -55,9 +58,13 @@ public class TestUtils {
     private TaskStatusRepository taskStatusRepository;
 
     @Autowired
+    private TaskRepository taskRepository;
+
+    @Autowired
     private JWTHelper jwtHelper;
 
     public void tearDown() {
+        taskRepository.deleteAll();
         taskStatusRepository.deleteAll();
         userRepository.deleteAll();
     }
@@ -67,14 +74,28 @@ public class TestUtils {
     }
 
     public TaskStatus createDefaultTaskStatus(String username) throws Exception {
-        final var response1 = perform(post(BASE_URL + TASK_STATUS_CONTROLLER_PATH)
+        final var response = perform(post(BASE_URL + TASK_STATUS_CONTROLLER_PATH)
                         .content(asJson(testTaskStatusDto))
                         .contentType(APPLICATION_JSON), username)
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse();
 
-        return fromJson(response1.getContentAsString(), new TypeReference<>() {
+        return fromJson(response.getContentAsString(), new TypeReference<>() {
+        });
+    }
+
+    public Task createDefaultTask(String username) throws Exception {
+        final var taskStatus = createDefaultTaskStatus(username);
+        final Long executorId = userRepository.findByEmail(TEST_USERNAME).get().getId();
+        final var response = perform(post(BASE_URL + TASKS_CONTROLLER_PATH)
+                .content(asJson(new TaskDto("Task name", "Description", executorId, taskStatus.getId())))
+                .contentType(APPLICATION_JSON), username)
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse();
+
+        return fromJson(response.getContentAsString(), new TypeReference<>() {
         });
     }
 

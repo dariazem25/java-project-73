@@ -3,6 +3,7 @@ package hexlet.code.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import hexlet.code.config.SpringConfig;
 import hexlet.code.dto.TaskStatusDto;
+import hexlet.code.model.Task;
 import hexlet.code.model.TaskStatus;
 import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.utils.TestUtils;
@@ -62,13 +63,13 @@ public class TaskStatusControllerTest {
                 .andReturn()
                 .getResponse();
 
-        final TaskStatus taskStatus = fromJson(response.getContentAsString(), new TypeReference<>() {
+        final TaskStatus actualTaskStatus = fromJson(response.getContentAsString(), new TypeReference<>() {
         });
-        final TaskStatus createsTaskStatus = taskStatusRepository.findById(taskStatus.getId()).get();
+        final TaskStatus expectedTaskStatus = taskStatusRepository.findById(actualTaskStatus.getId()).get();
 
-        assertEquals(createsTaskStatus.getId(), taskStatus.getId());
-        assertEquals(createsTaskStatus.getName(), taskStatus.getName());
-        assertThat(taskStatus.getCreatedAt()).isNotNull();
+        assertEquals(expectedTaskStatus.getId(), actualTaskStatus.getId());
+        assertEquals(expectedTaskStatus.getName(), actualTaskStatus.getName());
+        assertThat(actualTaskStatus.getCreatedAt()).isNotNull();
 
         assertThat(response.getContentAsString()).contains("name");
         assertThat(response.getContentAsString()).contains("id");
@@ -95,36 +96,36 @@ public class TaskStatusControllerTest {
     public void updateTaskStatus() throws Exception {
         utils.regDefaultUser();
 
-        // created task
+        // created task status
         final TaskStatus oldTaskStatus = utils.createDefaultTaskStatus(TEST_USERNAME);
 
         // updated task status
-        final var response2 = utils.perform(put(BASE_URL + TASK_STATUS_CONTROLLER_PATH + ID, oldTaskStatus.getId())
+        final var response = utils.perform(put(BASE_URL + TASK_STATUS_CONTROLLER_PATH + ID, oldTaskStatus.getId())
                         .content(asJson(new TaskStatusDto("New status")))
                         .contentType(APPLICATION_JSON), TEST_USERNAME)
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse();
 
-        final TaskStatus newTaskStatus = fromJson(response2.getContentAsString(), new TypeReference<>() {
+        final TaskStatus actualTaskStatus = fromJson(response.getContentAsString(), new TypeReference<>() {
         });
 
-        final TaskStatus updatedTask = taskStatusRepository.findById(oldTaskStatus.getId()).get();
+        final TaskStatus expectedTaskStatus = taskStatusRepository.findById(oldTaskStatus.getId()).get();
 
-        assertEquals(updatedTask.getId(), newTaskStatus.getId());
-        assertEquals(updatedTask.getName(), newTaskStatus.getName());
-        assertThat(newTaskStatus.getCreatedAt()).isNotNull();
+        assertEquals(expectedTaskStatus.getId(), actualTaskStatus.getId());
+        assertEquals(expectedTaskStatus.getName(), actualTaskStatus.getName());
+        assertThat(actualTaskStatus.getCreatedAt()).isNotNull();
 
-        assertThat(response2.getContentAsString()).contains("name");
-        assertThat(response2.getContentAsString()).contains("id");
-        assertThat(response2.getContentAsString()).contains("createdAt");
+        assertThat(response.getContentAsString()).contains("name");
+        assertThat(response.getContentAsString()).contains("id");
+        assertThat(response.getContentAsString()).contains("createdAt");
     }
 
     @Test
     public void updateToInvalidTaskStatus() throws Exception {
         utils.regDefaultUser();
 
-        // created task
+        // created task status
         final TaskStatus oldTaskStatus = utils.createDefaultTaskStatus(TEST_USERNAME);
 
         // update task status
@@ -137,7 +138,7 @@ public class TaskStatusControllerTest {
 
         final TaskStatus taskStatus = taskStatusRepository.findById(oldTaskStatus.getId()).get();
 
-        // the task was not updated
+        // the task status was not updated
         assertEquals(oldTaskStatus.getId(), taskStatus.getId());
         assertEquals(oldTaskStatus.getName(), taskStatus.getName());
         assertThat(oldTaskStatus.getCreatedAt()).isNotNull();
@@ -165,17 +166,17 @@ public class TaskStatusControllerTest {
     public void getAllTaskStatuses() throws Exception {
         utils.regDefaultUser();
 
-        // created task
+        // created task status
         final TaskStatus existingTaskStatus = utils.createDefaultTaskStatus(TEST_USERNAME);
 
         // get task statuses
-        final var response2 = utils.perform(get(BASE_URL + TASK_STATUS_CONTROLLER_PATH), TEST_USERNAME)
+        final var response = utils.perform(get(BASE_URL + TASK_STATUS_CONTROLLER_PATH), TEST_USERNAME)
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse();
 
 
-        final List<TaskStatus> taskStatuses = fromJson(response2.getContentAsString(), new TypeReference<>() {
+        final List<TaskStatus> taskStatuses = fromJson(response.getContentAsString(), new TypeReference<>() {
         });
         assertThat(taskStatuses).hasSize(1);
 
@@ -188,22 +189,22 @@ public class TaskStatusControllerTest {
     public void getTaskStatusById() throws Exception {
         utils.regDefaultUser();
 
-        // created task
+        // created task status
         final TaskStatus existingTaskStatus = utils.createDefaultTaskStatus(TEST_USERNAME);
 
         // get task status by id
-        final var response2 = utils.perform(
+        final var response = utils.perform(
                         get(BASE_URL + TASK_STATUS_CONTROLLER_PATH + ID, existingTaskStatus.getId()), TEST_USERNAME)
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse();
 
-        final TaskStatus expectedTaskStatus = fromJson(response2.getContentAsString(), new TypeReference<>() {
+        final TaskStatus actualTaskStatus = fromJson(response.getContentAsString(), new TypeReference<>() {
         });
 
-        assertEquals(expectedTaskStatus.getId(), existingTaskStatus.getId());
-        assertEquals(expectedTaskStatus.getCreatedAt(), existingTaskStatus.getCreatedAt());
-        assertEquals(expectedTaskStatus.getName(), existingTaskStatus.getName());
+        assertEquals(existingTaskStatus.getId(), actualTaskStatus.getId());
+        assertEquals(existingTaskStatus.getCreatedAt(), actualTaskStatus.getCreatedAt());
+        assertEquals(existingTaskStatus.getName(), actualTaskStatus.getName());
     }
 
     @Test
@@ -224,19 +225,19 @@ public class TaskStatusControllerTest {
     public void deleteTaskStatus() throws Exception {
         utils.regDefaultUser();
 
-        // created task
+        // created task status
         final TaskStatus existingTaskStatus = utils.createDefaultTaskStatus(TEST_USERNAME);
 
-        // delete the task
-        final var response2 = utils.perform(delete(BASE_URL + TASK_STATUS_CONTROLLER_PATH + ID,
+        // delete the task status
+        final var response = utils.perform(delete(BASE_URL + TASK_STATUS_CONTROLLER_PATH + ID,
                         existingTaskStatus.getId()), TEST_USERNAME)
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse();
 
-        assertThat(response2.getContentAsString()).isEmpty();
+        assertThat(response.getContentAsString()).isEmpty();
 
-        // the task is deleted
+        // the task status is deleted
         assertEquals(0, taskStatusRepository.count());
     }
 
@@ -251,5 +252,24 @@ public class TaskStatusControllerTest {
                 .getResponse();
 
         assertThat(response.getContentAsString()).contains("Task status not found");
+    }
+
+    @Test
+    public void deleteTaskStatusWithExistingTasks() throws Exception {
+        utils.regDefaultUser();
+
+        // created task with task status
+        final Task task = utils.createDefaultTask(TEST_USERNAME);
+
+        // delete task
+        final var response = utils.perform(delete(BASE_URL + TASK_STATUS_CONTROLLER_PATH + ID,
+                        task.getTaskStatus().getId()), TEST_USERNAME)
+                .andExpect(status().isUnprocessableEntity())
+                .andReturn()
+                .getResponse();
+
+        assertThat(response.getContentAsString()).contains("Cannot delete the task status. The task status has tasks");
+
+        assertEquals(1, taskStatusRepository.count());
     }
 }
