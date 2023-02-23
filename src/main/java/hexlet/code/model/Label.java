@@ -1,5 +1,6 @@
 package hexlet.code.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,14 +11,11 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GenerationType;
 import javax.persistence.GeneratedValue;
-import javax.persistence.ManyToOne;
-import javax.persistence.ManyToMany;
 import javax.persistence.Id;
-import javax.persistence.FetchType;
+import javax.persistence.ManyToMany;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.util.Date;
 import java.util.Set;
 
@@ -26,10 +24,10 @@ import static javax.persistence.TemporalType.TIMESTAMP;
 @Getter
 @Setter
 @Entity
-@Table(name = "tasks")
+@Table(name = "labels")
 @NoArgsConstructor
 @AllArgsConstructor
-public class Task {
+public class Label {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,23 +37,11 @@ public class Task {
     @Column(unique = true)
     private String name;
 
-    private String description;
-
-    @NotNull
-    @ManyToOne
-    private TaskStatus taskStatus;
-
-    @NotNull
-    @ManyToOne
-    private User author;
-
-    @ManyToOne
-    private User executor;
-
     @CreationTimestamp
     @Temporal(TIMESTAMP)
     private Date createdAt;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    private Set<Label> labels;
+    @JsonIgnore
+    @ManyToMany(mappedBy = "labels")
+    private Set<Task> tasks;
 }

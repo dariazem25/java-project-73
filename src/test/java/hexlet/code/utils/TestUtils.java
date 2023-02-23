@@ -4,11 +4,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hexlet.code.component.JWTHelper;
+import hexlet.code.dto.LabelDto;
 import hexlet.code.dto.TaskDto;
 import hexlet.code.dto.TaskStatusDto;
 import hexlet.code.dto.UserDto;
+import hexlet.code.model.Label;
 import hexlet.code.model.Task;
 import hexlet.code.model.TaskStatus;
+import hexlet.code.repository.LabelRepository;
 import hexlet.code.repository.TaskRepository;
 import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.repository.UserRepository;
@@ -20,7 +23,8 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 
 import java.util.Map;
 
-import static hexlet.code.controller.TaskController.TASKS_CONTROLLER_PATH;
+import static hexlet.code.controller.LabelController.LABEL_CONTROLLER_PATH;
+import static hexlet.code.controller.TaskController.TASK_CONTROLLER_PATH;
 import static hexlet.code.controller.TaskStatusController.TASK_STATUS_CONTROLLER_PATH;
 import static hexlet.code.controller.UserController.USER_CONTROLLER_PATH;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -61,11 +65,15 @@ public class TestUtils {
     private TaskRepository taskRepository;
 
     @Autowired
+    private LabelRepository labelRepository;
+
+    @Autowired
     private JWTHelper jwtHelper;
 
     public void tearDown() {
         taskRepository.deleteAll();
         taskStatusRepository.deleteAll();
+        labelRepository.deleteAll();
         userRepository.deleteAll();
     }
 
@@ -88,8 +96,20 @@ public class TestUtils {
     public Task createDefaultTask(String username) throws Exception {
         final var taskStatus = createDefaultTaskStatus(username);
         final Long executorId = userRepository.findByEmail(TEST_USERNAME).get().getId();
-        final var response = perform(post(BASE_URL + TASKS_CONTROLLER_PATH)
-                .content(asJson(new TaskDto("Task name", "Description", executorId, taskStatus.getId())))
+        final var response = perform(post(BASE_URL + TASK_CONTROLLER_PATH)
+                .content(asJson(new TaskDto("Task name", null, null, taskStatus.getId(), null)))
+                .contentType(APPLICATION_JSON), username)
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse();
+
+        return fromJson(response.getContentAsString(), new TypeReference<>() {
+        });
+    }
+
+    public Label createDefaultLabel(String username) throws Exception {
+        final var response = perform(post(BASE_URL + LABEL_CONTROLLER_PATH)
+                .content(asJson(new LabelDto("Label name")))
                 .contentType(APPLICATION_JSON), username)
                 .andExpect(status().isCreated())
                 .andReturn()

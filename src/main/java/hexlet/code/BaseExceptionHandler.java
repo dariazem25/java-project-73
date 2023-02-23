@@ -3,6 +3,7 @@ package hexlet.code;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import hexlet.code.exceptions.InvalidRequestException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
@@ -40,6 +41,12 @@ public class BaseExceptionHandler {
     @ResponseStatus(BAD_REQUEST)
     @ExceptionHandler({HttpMessageNotReadableException.class})
     public String validationExceptionsHandler(HttpMessageNotReadableException exception) {
+        return exception.getMessage();
+    }
+
+    @ResponseStatus(BAD_REQUEST)
+    @ExceptionHandler({InvalidRequestException.class})
+    public String validationExceptionsHandler(InvalidRequestException exception) {
         return exception.getMessage();
     }
 
