@@ -61,7 +61,7 @@ public class LabelControllerTest {
         utils.regDefaultUser();
 
         final var response = utils.perform(post(BASE_URL + LABEL_CONTROLLER_PATH)
-                        .content(asJson(new LabelDto("New task")))
+                        .content(asJson(new LabelDto("New label")))
                         .contentType(APPLICATION_JSON), TEST_USERNAME)
                 .andExpect(status().isCreated())
                 .andReturn()

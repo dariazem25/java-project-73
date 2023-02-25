@@ -2,7 +2,9 @@ package hexlet.code.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import hexlet.code.config.SpringConfig;
+import hexlet.code.dto.LabelDto;
 import hexlet.code.dto.TaskDto;
+import hexlet.code.dto.TaskStatusDto;
 import hexlet.code.dto.UserDto;
 import hexlet.code.model.Label;
 import hexlet.code.model.Task;
@@ -24,7 +26,9 @@ import java.util.List;
 import java.util.Set;
 
 import static hexlet.code.config.SpringConfig.TEST_PROFILE;
+import static hexlet.code.controller.LabelController.LABEL_CONTROLLER_PATH;
 import static hexlet.code.controller.TaskController.TASK_CONTROLLER_PATH;
+import static hexlet.code.controller.TaskStatusController.TASK_STATUS_CONTROLLER_PATH;
 import static hexlet.code.controller.UserController.ID;
 import static hexlet.code.controller.UserController.USER_CONTROLLER_PATH;
 import static hexlet.code.utils.TestUtils.BASE_URL;
@@ -734,5 +738,419 @@ public class TaskControllerTest {
                 .andExpect(status().isForbidden())
                 .andReturn()
                 .getResponse();
+    }
+
+    @Test
+    public void getTasksWithDefinedTaskStatus() throws Exception {
+
+        // Preconditions:
+        utils.regDefaultUser();
+
+        // 1) the first task with task status
+        final Task task1 = utils.createDefaultTask(TEST_USERNAME);
+
+        // 2) the second task with another task status
+        final TaskStatus taskStatus = fromJson(utils.perform(post(BASE_URL + TASK_STATUS_CONTROLLER_PATH)
+                        .content(asJson(new TaskStatusDto("Fixed")))
+                        .contentType(APPLICATION_JSON), TEST_USERNAME)
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse().getContentAsString(), new TypeReference<>() {
+        });
+        final Task task2 = fromJson(utils.perform(post(BASE_URL + TASK_CONTROLLER_PATH)
+                        .content(asJson(new TaskDto("New task", null, null, taskStatus.getId(), null)))
+                        .contentType(APPLICATION_JSON), TEST_USERNAME)
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse().getContentAsString(), new TypeReference<>() {
+        });
+
+        // Actions:
+        // Get tasks
+        final var response = utils.perform(get(BASE_URL + TASK_CONTROLLER_PATH
+                        + "?taskStatus=" + taskStatus.getId()), TEST_USERNAME)
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse();
+
+
+        final List<Task> tasks = fromJson(response.getContentAsString(), new TypeReference<>() {
+        });
+        assertThat(tasks).hasSize(1);
+
+        assertThat(task2.getId()).isEqualTo(tasks.get(0).getId());
+        assertNull(tasks.get(0).getDescription());
+        assertThat(task2.getCreatedAt()).isEqualTo(tasks.get(0).getCreatedAt());
+        assertThat(task2.getName()).isEqualTo(tasks.get(0).getName());
+
+        assertEquals(task2.getAuthor().getId(), tasks.get(0).getAuthor().getId());
+        assertEquals(task2.getAuthor().getEmail(), tasks.get(0).getAuthor().getEmail());
+        assertEquals(task2.getAuthor().getFirstName(), tasks.get(0).getAuthor().getFirstName());
+        assertEquals(task2.getAuthor().getLastName(), tasks.get(0).getAuthor().getLastName());
+        assertThat(task2.getAuthor().getCreatedAt()).isEqualTo(tasks.get(0).getAuthor().getCreatedAt());
+
+        assertNull(tasks.get(0).getExecutor());
+
+        assertEquals(task2.getTaskStatus().getId(), tasks.get(0).getTaskStatus().getId());
+        assertEquals(task2.getTaskStatus().getName(), tasks.get(0).getTaskStatus().getName());
+        assertThat(task2.getTaskStatus().getCreatedAt()).isEqualTo(tasks.get(0).getTaskStatus().getCreatedAt());
+    }
+
+    @Test
+    public void getTasksWithDefinedExecutorId() throws Exception {
+
+        // Preconditions:
+        // one user
+        utils.regDefaultUser();
+        // another user
+        User user2 = fromJson(utils.perform(post(BASE_URL + USER_CONTROLLER_PATH)
+                        .content(asJson(new UserDto("d@mail.ru", "D", "Z", "123")))
+                        .contentType(APPLICATION_JSON))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse().getContentAsString(), new TypeReference<>() {
+        });
+
+
+        // default task status
+        final TaskStatus taskStatus = utils.createDefaultTaskStatus(TEST_USERNAME);
+        final Long executorId1 = userRepository.findByEmail(TEST_USERNAME).get().getId();
+
+        // the first task with executor id
+        final Task task1 = fromJson(utils.perform(post(BASE_URL + TASK_CONTROLLER_PATH)
+                        .content(asJson(new TaskDto("New task", null, executorId1, taskStatus.getId(), null)))
+                        .contentType(APPLICATION_JSON), TEST_USERNAME)
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse().getContentAsString(), new TypeReference<>() {
+        });
+
+        // the second task with another executor id
+        final Long executorId2 = user2.getId();
+        final Task task2 = fromJson(utils.perform(post(BASE_URL + TASK_CONTROLLER_PATH)
+                        .content(asJson(new TaskDto("Second task", null, executorId2, taskStatus.getId(), null)))
+                        .contentType(APPLICATION_JSON), TEST_USERNAME)
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse().getContentAsString(), new TypeReference<>() {
+        });
+
+        // Actions:
+        // Get tasks
+        final var response = utils.perform(get(BASE_URL + TASK_CONTROLLER_PATH
+                        + "?executorId=" + executorId1), TEST_USERNAME)
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse();
+
+
+        final List<Task> tasks = fromJson(response.getContentAsString(), new TypeReference<>() {
+        });
+        assertThat(tasks).hasSize(1);
+
+        assertThat(task1.getId()).isEqualTo(tasks.get(0).getId());
+        assertNull(tasks.get(0).getDescription());
+        assertThat(task1.getCreatedAt()).isEqualTo(tasks.get(0).getCreatedAt());
+        assertThat(task1.getName()).isEqualTo(tasks.get(0).getName());
+
+        assertEquals(task1.getAuthor().getId(), tasks.get(0).getAuthor().getId());
+        assertEquals(task1.getAuthor().getEmail(), tasks.get(0).getAuthor().getEmail());
+        assertEquals(task1.getAuthor().getFirstName(), tasks.get(0).getAuthor().getFirstName());
+        assertEquals(task1.getAuthor().getLastName(), tasks.get(0).getAuthor().getLastName());
+        assertThat(task1.getAuthor().getCreatedAt()).isEqualTo(tasks.get(0).getAuthor().getCreatedAt());
+
+        assertEquals(task1.getExecutor().getId(), tasks.get(0).getExecutor().getId());
+        assertEquals(task1.getExecutor().getEmail(), tasks.get(0).getExecutor().getEmail());
+        assertEquals(task1.getExecutor().getFirstName(), tasks.get(0).getExecutor().getFirstName());
+        assertEquals(task1.getExecutor().getLastName(), tasks.get(0).getExecutor().getLastName());
+        assertThat(tasks.get(0).getExecutor().getCreatedAt()).isNotNull();
+
+        assertEquals(task1.getTaskStatus().getId(), tasks.get(0).getTaskStatus().getId());
+        assertEquals(task1.getTaskStatus().getName(), tasks.get(0).getTaskStatus().getName());
+        assertThat(task1.getTaskStatus().getCreatedAt()).isEqualTo(tasks.get(0).getTaskStatus().getCreatedAt());
+    }
+
+    @Test
+    public void getTasksWithDefinedLabel() throws Exception {
+
+        // Preconditions:
+        // user
+        utils.regDefaultUser();
+
+        // default task status
+        final TaskStatus taskStatus = utils.createDefaultTaskStatus(TEST_USERNAME);
+
+        // one label
+        Label label1 = utils.createDefaultLabel(TEST_USERNAME);
+
+        // another label
+        final Label label2 = fromJson(utils.perform(post(BASE_URL + LABEL_CONTROLLER_PATH)
+                        .content(asJson(new LabelDto("Bug")))
+                        .contentType(APPLICATION_JSON), TEST_USERNAME)
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse().getContentAsString(), new TypeReference<>() {
+        });
+
+        // the first task with label
+        final Task task1 = fromJson(utils.perform(post(BASE_URL + TASK_CONTROLLER_PATH)
+                        .content(asJson(new TaskDto("New task", null,
+                                null, taskStatus.getId(), Set.of(label1.getId()))))
+                        .contentType(APPLICATION_JSON), TEST_USERNAME)
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse().getContentAsString(), new TypeReference<>() {
+        });
+
+        // the second task with another label
+        final Task task2 = fromJson(utils.perform(post(BASE_URL + TASK_CONTROLLER_PATH)
+                        .content(asJson(new TaskDto("Second task", null,
+                                null, taskStatus.getId(), Set.of(label2.getId()))))
+                        .contentType(APPLICATION_JSON), TEST_USERNAME)
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse().getContentAsString(), new TypeReference<>() {
+        });
+
+        // Actions:
+        // Get tasks
+        final var response = utils.perform(get(BASE_URL + TASK_CONTROLLER_PATH
+                        + "?labels=" + label1.getId()), TEST_USERNAME)
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse();
+
+
+        final List<Task> tasks = fromJson(response.getContentAsString(), new TypeReference<>() {
+        });
+        assertThat(tasks).hasSize(1);
+
+        assertThat(task1.getId()).isEqualTo(tasks.get(0).getId());
+        assertNull(tasks.get(0).getDescription());
+        assertThat(task1.getCreatedAt()).isEqualTo(tasks.get(0).getCreatedAt());
+        assertThat(task1.getName()).isEqualTo(tasks.get(0).getName());
+
+        assertEquals(task1.getAuthor().getId(), tasks.get(0).getAuthor().getId());
+        assertEquals(task1.getAuthor().getEmail(), tasks.get(0).getAuthor().getEmail());
+        assertEquals(task1.getAuthor().getFirstName(), tasks.get(0).getAuthor().getFirstName());
+        assertEquals(task1.getAuthor().getLastName(), tasks.get(0).getAuthor().getLastName());
+        assertThat(task1.getAuthor().getCreatedAt()).isEqualTo(tasks.get(0).getAuthor().getCreatedAt());
+
+        assertNull(tasks.get(0).getExecutor());
+
+        assertEquals(task1.getTaskStatus().getId(), tasks.get(0).getTaskStatus().getId());
+        assertEquals(task1.getTaskStatus().getName(), tasks.get(0).getTaskStatus().getName());
+        assertThat(task1.getTaskStatus().getCreatedAt()).isEqualTo(tasks.get(0).getTaskStatus().getCreatedAt());
+
+        assertEquals(task1.getLabels().stream().toList().get(0).getName(),
+                tasks.get(0).getLabels().stream().toList().get(0).getName());
+        assertEquals(task1.getLabels().stream().toList().get(0).getId(),
+                tasks.get(0).getLabels().stream().toList().get(0).getId());
+    }
+
+    @Test
+    public void getTasksWithDefinedAuthorId() throws Exception {
+
+        // Preconditions:
+        // one user
+        utils.regDefaultUser();
+        // another user
+        User user2 = fromJson(utils.perform(post(BASE_URL + USER_CONTROLLER_PATH)
+                        .content(asJson(new UserDto("d@mail.ru", "D", "Z", "123")))
+                        .contentType(APPLICATION_JSON))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse().getContentAsString(), new TypeReference<>() {
+        });
+
+
+        // default task status
+        final TaskStatus taskStatus = utils.createDefaultTaskStatus(TEST_USERNAME);
+
+        // the first task with the first author
+        final Task task1 = fromJson(utils.perform(post(BASE_URL + TASK_CONTROLLER_PATH)
+                        .content(asJson(new TaskDto("New task", null,
+                                null, taskStatus.getId(), null)))
+                        .contentType(APPLICATION_JSON), TEST_USERNAME)
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse().getContentAsString(), new TypeReference<>() {
+        });
+
+        // the second task with another author
+        final Task task2 = fromJson(utils.perform(post(BASE_URL + TASK_CONTROLLER_PATH)
+                        .content(asJson(new TaskDto("Second task", null,
+                                null, taskStatus.getId(), null)))
+                        .contentType(APPLICATION_JSON), user2.getEmail())
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse().getContentAsString(), new TypeReference<>() {
+        });
+
+        // Actions:
+        // Get tasks
+        final var response = utils.perform(get(BASE_URL + TASK_CONTROLLER_PATH
+                        + "?authorId=" + user2.getId()), user2.getEmail())
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse();
+
+
+        final List<Task> tasks = fromJson(response.getContentAsString(), new TypeReference<>() {
+        });
+        assertThat(tasks).hasSize(1);
+
+        assertThat(task2.getId()).isEqualTo(tasks.get(0).getId());
+        assertNull(tasks.get(0).getDescription());
+        assertThat(task2.getCreatedAt()).isEqualTo(tasks.get(0).getCreatedAt());
+        assertThat(task2.getName()).isEqualTo(tasks.get(0).getName());
+
+        assertEquals(task2.getAuthor().getId(), tasks.get(0).getAuthor().getId());
+        assertEquals(task2.getAuthor().getEmail(), tasks.get(0).getAuthor().getEmail());
+        assertEquals(task2.getAuthor().getFirstName(), tasks.get(0).getAuthor().getFirstName());
+        assertEquals(task2.getAuthor().getLastName(), tasks.get(0).getAuthor().getLastName());
+        assertThat(task2.getAuthor().getCreatedAt()).isEqualTo(tasks.get(0).getAuthor().getCreatedAt());
+
+        assertNull(tasks.get(0).getExecutor());
+
+        assertEquals(task2.getTaskStatus().getId(), tasks.get(0).getTaskStatus().getId());
+        assertEquals(task2.getTaskStatus().getName(), tasks.get(0).getTaskStatus().getName());
+        assertThat(task2.getTaskStatus().getCreatedAt()).isEqualTo(tasks.get(0).getTaskStatus().getCreatedAt());
+    }
+
+    @Test
+    public void getTasksWithAllFilters() throws Exception {
+
+        // Preconditions:
+        // users
+        utils.regDefaultUser();
+        final User user2 = fromJson(utils.perform(post(BASE_URL + USER_CONTROLLER_PATH)
+                        .content(asJson(new UserDto("d@mail.ru", "D", "Z", "123")))
+                        .contentType(APPLICATION_JSON))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse().getContentAsString(), new TypeReference<>() {
+        });
+
+        // labels
+        final Label label1 = utils.createDefaultLabel(TEST_USERNAME);
+        final Label label2 = fromJson(utils.perform(post(BASE_URL + LABEL_CONTROLLER_PATH)
+                        .content(asJson(new LabelDto("Bug")))
+                        .contentType(APPLICATION_JSON), TEST_USERNAME)
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse().getContentAsString(), new TypeReference<>() {
+        });
+
+        // task statuses
+        final TaskStatus taskStatus1 = fromJson(utils.perform(post(BASE_URL + TASK_STATUS_CONTROLLER_PATH)
+                        .content(asJson(new TaskStatusDto("In development")))
+                        .contentType(APPLICATION_JSON), TEST_USERNAME)
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse().getContentAsString(), new TypeReference<>() {
+        });
+        final TaskStatus taskStatus2 = fromJson(utils.perform(post(BASE_URL + TASK_STATUS_CONTROLLER_PATH)
+                        .content(asJson(new TaskStatusDto("Fixed")))
+                        .contentType(APPLICATION_JSON), TEST_USERNAME)
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse().getContentAsString(), new TypeReference<>() {
+        });
+
+        //executors ids
+        final Long executorId1 = userRepository.findByEmail(TEST_USERNAME).get().getId();
+        final Long executorId2 = user2.getId();
+
+        // tasks
+        final Task task1 = utils.createDefaultTask(TEST_USERNAME);
+        final Task task2 = fromJson(utils.perform(post(BASE_URL + TASK_CONTROLLER_PATH)
+                        .content(asJson(new TaskDto("Second task", null,
+                                executorId1, taskStatus1.getId(), Set.of(label1.getId()))))
+                        .contentType(APPLICATION_JSON), TEST_USERNAME)
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse().getContentAsString(), new TypeReference<>() {
+        });
+        final Task task3 = fromJson(utils.perform(post(BASE_URL + TASK_CONTROLLER_PATH)
+                        .content(asJson(new TaskDto("Third task", null,
+                                executorId1, taskStatus1.getId(), Set.of(label2.getId()))))
+                        .contentType(APPLICATION_JSON), TEST_USERNAME)
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse().getContentAsString(), new TypeReference<>() {
+        });
+        final Task task4 = fromJson(utils.perform(post(BASE_URL + TASK_CONTROLLER_PATH)
+                        .content(asJson(new TaskDto("Fourth task", null,
+                                executorId2, taskStatus1.getId(), Set.of(label1.getId()))))
+                        .contentType(APPLICATION_JSON), TEST_USERNAME)
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse().getContentAsString(), new TypeReference<>() {
+        });
+        final Task task5 = fromJson(utils.perform(post(BASE_URL + TASK_CONTROLLER_PATH)
+                        .content(asJson(new TaskDto("Fifth task", null,
+                                executorId1, taskStatus2.getId(), Set.of(label1.getId()))))
+                        .contentType(APPLICATION_JSON), TEST_USERNAME)
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse().getContentAsString(), new TypeReference<>() {
+        });
+
+        final Task task6 = fromJson(utils.perform(post(BASE_URL + TASK_CONTROLLER_PATH)
+                        .content(asJson(new TaskDto("Sixth task", null,
+                                executorId1, taskStatus1.getId(), Set.of(label1.getId()))))
+                        .contentType(APPLICATION_JSON), user2.getEmail())
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse().getContentAsString(), new TypeReference<>() {
+        });
+
+        final Task task7 = fromJson(utils.perform(post(BASE_URL + TASK_CONTROLLER_PATH)
+                        .content(asJson(new TaskDto("Seventh task", null,
+                                executorId2, taskStatus2.getId(), Set.of(label2.getId()))))
+                        .contentType(APPLICATION_JSON), user2.getEmail())
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse().getContentAsString(), new TypeReference<>() {
+        });
+
+        // Actions:
+        // Get tasks
+        final var response = utils.perform(get(BASE_URL + TASK_CONTROLLER_PATH
+                                + "?labels=" + label2.getId()
+                                + "&executorId=" + executorId2
+                                + "&taskStatus=" + taskStatus2.getId()
+                                + "&authorId=" + user2.getId()),
+                        user2.getEmail())
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse();
+
+
+        final List<Task> tasks = fromJson(response.getContentAsString(), new TypeReference<>() {
+        });
+        assertThat(tasks).hasSize(1);
+
+        assertThat(task7.getId()).isEqualTo(tasks.get(0).getId());
+        assertNull(tasks.get(0).getDescription());
+        assertThat(task7.getCreatedAt()).isEqualTo(tasks.get(0).getCreatedAt());
+        assertThat(task7.getName()).isEqualTo(tasks.get(0).getName());
+
+        assertEquals(task7.getAuthor().getId(), tasks.get(0).getAuthor().getId());
+        assertEquals(task7.getAuthor().getEmail(), tasks.get(0).getAuthor().getEmail());
+        assertEquals(task7.getAuthor().getFirstName(), tasks.get(0).getAuthor().getFirstName());
+        assertEquals(task7.getAuthor().getLastName(), tasks.get(0).getAuthor().getLastName());
+        assertThat(task7.getAuthor().getCreatedAt()).isEqualTo(tasks.get(0).getAuthor().getCreatedAt());
+
+        assertEquals(task7.getExecutor().getId(), tasks.get(0).getExecutor().getId());
+        assertEquals(task7.getExecutor().getEmail(), tasks.get(0).getExecutor().getEmail());
+        assertEquals(task7.getExecutor().getFirstName(), tasks.get(0).getExecutor().getFirstName());
+        assertEquals(task7.getExecutor().getLastName(), tasks.get(0).getExecutor().getLastName());
+        assertThat(tasks.get(0).getExecutor().getCreatedAt()).isNotNull();
+
+        assertEquals(task7.getTaskStatus().getId(), tasks.get(0).getTaskStatus().getId());
+        assertEquals(task7.getTaskStatus().getName(), tasks.get(0).getTaskStatus().getName());
+        assertThat(task7.getTaskStatus().getCreatedAt()).isEqualTo(tasks.get(0).getTaskStatus().getCreatedAt());
     }
 }

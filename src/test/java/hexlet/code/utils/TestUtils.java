@@ -95,7 +95,6 @@ public class TestUtils {
 
     public Task createDefaultTask(String username) throws Exception {
         final var taskStatus = createDefaultTaskStatus(username);
-        final Long executorId = userRepository.findByEmail(TEST_USERNAME).get().getId();
         final var response = perform(post(BASE_URL + TASK_CONTROLLER_PATH)
                 .content(asJson(new TaskDto("Task name", null, null, taskStatus.getId(), null)))
                 .contentType(APPLICATION_JSON), username)
