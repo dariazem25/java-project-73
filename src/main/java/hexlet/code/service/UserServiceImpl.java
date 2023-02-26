@@ -13,6 +13,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.NoSuchElementException;
+
 import static hexlet.code.config.security.SecurityConfig.DEFAULT_AUTHORITIES;
 
 @Service
@@ -37,7 +39,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     @Override
     public User updateUser(final Long id, final UserDto userDto) {
         final User userToUpdate = userRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new NoSuchElementException("User not found"));
         userToUpdate.setEmail(userDto.getEmail());
         userToUpdate.setFirstName(userDto.getFirstName());
         userToUpdate.setLastName(userDto.getLastName());
@@ -48,13 +50,13 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     @Override
     public User getUser(Long id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new NoSuchElementException("User not found"));
     }
 
     @Override
     public void deleteUser(Long id) {
         final User user = userRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new NoSuchElementException("User not found"));
         if (!(user.getExecutorTasks().isEmpty()) || !(user.getAuthorTasks().isEmpty())) {
             throw new DataIntegrityViolationException("Cannot delete the user. The user has tasks");
         }

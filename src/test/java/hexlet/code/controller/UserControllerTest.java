@@ -247,7 +247,7 @@ public class UserControllerTest {
         final User expectedUser = userRepository.findAll().get(0);
         final var response = utils.perform(
                         get(BASE_URL + USER_CONTROLLER_PATH + ID, 5), expectedUser.getEmail())
-                .andExpect(status().isUnauthorized())
+                .andExpect(status().isNotFound())
                 .andReturn()
                 .getResponse();
 

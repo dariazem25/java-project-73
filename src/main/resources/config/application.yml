@@ -16,3 +16,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
+
+springdoc:
+  swagger-ui:
+    path: /swagger.html
