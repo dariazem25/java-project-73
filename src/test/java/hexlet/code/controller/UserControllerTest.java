@@ -571,7 +571,37 @@ public class UserControllerTest {
     @Test
     public void validLogin() throws Exception {
         utils.regUser(new UserDto(TEST_USERNAME, "Kate", "Black", "123"));
-        var loginDto = new LoginDto(TEST_USERNAME, "123");
+        var loginDto = new LoginDto(null, null, TEST_USERNAME, "123");
+
+        final var response = utils.perform(post(BASE_URL + "/login")
+                        .content(asJson(loginDto))
+                        .contentType(APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse();
+
+        assertThat(response.getContentAsString()).isNotEmpty();
+    }
+
+    @Test
+    public void validLoginWithDefinedFirstName() throws Exception {
+        utils.regUser(new UserDto(TEST_USERNAME, "Kate", "Black", "123"));
+        var loginDto = new LoginDto("Kate", null, TEST_USERNAME, "123");
+
+        final var response = utils.perform(post(BASE_URL + "/login")
+                        .content(asJson(loginDto))
+                        .contentType(APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse();
+
+        assertThat(response.getContentAsString()).isNotEmpty();
+    }
+
+    @Test
+    public void validLoginWithDefinedLastName() throws Exception {
+        utils.regUser(new UserDto(TEST_USERNAME, "Kate", "Black", "123"));
+        var loginDto = new LoginDto(null, "Black", TEST_USERNAME, "123");
 
         final var response = utils.perform(post(BASE_URL + "/login")
                         .content(asJson(loginDto))
@@ -586,7 +616,7 @@ public class UserControllerTest {
     @Test
     public void loginWithWrongPassword() throws Exception {
         utils.regUser(new UserDto(TEST_USERNAME, "Kate", "Black", "123"));
-        var loginDto = new LoginDto(TEST_USERNAME, "1234");
+        var loginDto = new LoginDto(null, null, TEST_USERNAME, "1234");
 
         final var response = utils.perform(post(BASE_URL + "/login")
                         .content(asJson(loginDto))
@@ -601,7 +631,7 @@ public class UserControllerTest {
     @Test
     public void loginWithWrongUserName() throws Exception {
         utils.regUser(new UserDto(TEST_USERNAME, "Kate", "Black", "123"));
-        var loginDto = new LoginDto(TEST_USERNAME_2, "123");
+        var loginDto = new LoginDto(null, null, TEST_USERNAME_2, "123");
 
         final var response = utils.perform(post(BASE_URL + "/login")
                         .content(asJson(loginDto))
@@ -616,8 +646,8 @@ public class UserControllerTest {
     @Test
     public void invalidLogin() throws Exception {
         utils.regUser(new UserDto(TEST_USERNAME, "Kate", "Black", "123"));
-        var loginDto1 = new LoginDto("", "123");
-        var loginDto2 = new LoginDto(TEST_USERNAME, "");
+        var loginDto1 = new LoginDto(null, null, "", "123");
+        var loginDto2 = new LoginDto(null, null, TEST_USERNAME, "");
 
         // login with invalid username
         final var response1 = utils.perform(post(BASE_URL + "/login")
