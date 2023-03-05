@@ -34,18 +34,18 @@ public class TaskServiceImp implements TaskService {
 
         if (taskDto.getExecutorId() != null) {
             var user = userRepository.findById(taskDto.getExecutorId())
-                    .orElseThrow(() -> new InvalidRequestException("Executor not found"));
+                    .orElseThrow(() -> InvalidRequestException.invalidRequest("Executor not found"));
             task.setExecutor(user);
         }
 
         var taskStatus = taskStatusRepository.findById(taskDto.getTaskStatusId())
-                .orElseThrow(() -> new InvalidRequestException("Task status not found"));
+                .orElseThrow(() -> InvalidRequestException.invalidRequest("Task status not found"));
         task.setTaskStatus(taskStatus);
 
         if (taskDto.getLabelsIds() != null) {
             taskDto.getLabelsIds().forEach(
                     it -> labelRepository.findById(it)
-                            .orElseThrow(() -> new InvalidRequestException("Label not found"))
+                            .orElseThrow(() -> InvalidRequestException.invalidRequest("Label not found"))
             );
 
             task.setLabels(taskDto.getLabelsIds().stream()
@@ -59,26 +59,26 @@ public class TaskServiceImp implements TaskService {
     @Override
     public Task updateTask(Long id, TaskDto taskDto) {
         final Task taskToUpdate = taskRepository.findById(id)
-                .orElseThrow(() -> new InvalidRequestException("Task not found"));
+                .orElseThrow(() -> InvalidRequestException.invalidRequest("Task not found"));
 
         taskToUpdate.setName(taskDto.getName());
         taskToUpdate.setDescription(taskDto.getDescription());
 
         if (taskDto.getExecutorId() != null) {
             var user = userRepository.findById(taskDto.getExecutorId())
-                    .orElseThrow(() -> new InvalidRequestException("Executor not found"));
+                    .orElseThrow(() -> InvalidRequestException.invalidRequest("Executor not found"));
             taskToUpdate.setExecutor(user);
         }
 
         var taskStatus = taskStatusRepository.findById(taskDto.getTaskStatusId())
-                .orElseThrow(() -> new InvalidRequestException("Task status not found"));
+                .orElseThrow(() -> InvalidRequestException.invalidRequest("Task status not found"));
         taskToUpdate.setTaskStatus(taskStatus);
 
         taskToUpdate.setLabels(null);
         if (taskDto.getLabelsIds() != null) {
             taskDto.getLabelsIds().forEach(
                     it -> labelRepository.findById(it)
-                            .orElseThrow(() -> new InvalidRequestException("Label not found"))
+                            .orElseThrow(() -> InvalidRequestException.invalidRequest("Label not found"))
             );
             taskToUpdate.setLabels(taskDto.getLabelsIds().stream()
                     .map(labelRepository::getById)

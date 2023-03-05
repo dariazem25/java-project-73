@@ -39,14 +39,8 @@ public class BaseExceptionHandler {
     }
 
     @ResponseStatus(BAD_REQUEST)
-    @ExceptionHandler({HttpMessageNotReadableException.class})
-    public String validationExceptionsHandler(HttpMessageNotReadableException exception) {
-        return exception.getMessage();
-    }
-
-    @ResponseStatus(BAD_REQUEST)
-    @ExceptionHandler({InvalidRequestException.class})
-    public String validationExceptionsHandler(InvalidRequestException exception) {
+    @ExceptionHandler({HttpMessageNotReadableException.class, InvalidRequestException.class})
+    public String validationExceptionsHandler(RuntimeException exception) {
         return exception.getMessage();
     }
 

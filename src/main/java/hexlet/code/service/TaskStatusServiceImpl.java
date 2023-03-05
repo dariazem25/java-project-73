@@ -42,7 +42,7 @@ public class TaskStatusServiceImpl implements TaskStatusService {
     public void deleteTaskStatus(Long id) {
         final TaskStatus taskStatus = taskStatusRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Task status not found"));
-        if (!taskStatus.getTasks().isEmpty()) {
+        if (taskStatus.getTasks() != null && !(taskStatus.getTasks().isEmpty())) {
             throw new DataIntegrityViolationException("Cannot delete the task status. The task status has tasks");
         }
         taskStatusRepository.delete(taskStatus);

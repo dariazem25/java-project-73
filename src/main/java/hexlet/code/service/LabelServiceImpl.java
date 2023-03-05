@@ -45,7 +45,7 @@ public class LabelServiceImpl implements LabelService {
     public void deleteLabel(Long id) {
         final Label label = labelRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Label not found"));
-        if (!label.getTasks().isEmpty()) {
+        if (label.getTasks() != null && !(label.getTasks().isEmpty())) {
             throw new DataIntegrityViolationException("Cannot delete the label. Tasks have labels");
         }
         labelRepository.delete(label);

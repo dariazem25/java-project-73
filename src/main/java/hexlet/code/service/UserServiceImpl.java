@@ -57,7 +57,8 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     public void deleteUser(Long id) {
         final User user = userRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("User not found"));
-        if (!(user.getExecutorTasks().isEmpty()) || !(user.getAuthorTasks().isEmpty())) {
+        if ((user.getExecutorTasks() != null && !(user.getExecutorTasks().isEmpty())) || (user.getAuthorTasks() != null
+                && !(user.getAuthorTasks().isEmpty()))) {
             throw new DataIntegrityViolationException("Cannot delete the user. The user has tasks");
         }
         userRepository.delete(user);
