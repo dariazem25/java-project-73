@@ -23,5 +23,5 @@ public class TaskDto {
     @NotNull
     private Long taskStatusId;
 
-    private Set<Long> labelsIds;
+    private Set<Long> labelIds;
 }

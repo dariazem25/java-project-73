@@ -42,13 +42,13 @@ public class TaskServiceImp implements TaskService {
                 .orElseThrow(() -> InvalidRequestException.invalidRequest("Task status not found"));
         task.setTaskStatus(taskStatus);
 
-        if (taskDto.getLabelsIds() != null) {
-            taskDto.getLabelsIds().forEach(
+        if (taskDto.getLabelIds() != null) {
+            taskDto.getLabelIds().forEach(
                     it -> labelRepository.findById(it)
                             .orElseThrow(() -> InvalidRequestException.invalidRequest("Label not found"))
             );
 
-            task.setLabels(taskDto.getLabelsIds().stream()
+            task.setLabels(taskDto.getLabelIds().stream()
                     .map(labelRepository::getById)
                     .collect(Collectors.toSet()));
         }
@@ -75,12 +75,12 @@ public class TaskServiceImp implements TaskService {
         taskToUpdate.setTaskStatus(taskStatus);
 
         taskToUpdate.setLabels(null);
-        if (taskDto.getLabelsIds() != null) {
-            taskDto.getLabelsIds().forEach(
+        if (taskDto.getLabelIds() != null) {
+            taskDto.getLabelIds().forEach(
                     it -> labelRepository.findById(it)
                             .orElseThrow(() -> InvalidRequestException.invalidRequest("Label not found"))
             );
-            taskToUpdate.setLabels(taskDto.getLabelsIds().stream()
+            taskToUpdate.setLabels(taskDto.getLabelIds().stream()
                     .map(labelRepository::getById)
                     .collect(Collectors.toSet()));
         }
